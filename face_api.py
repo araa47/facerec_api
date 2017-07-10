@@ -170,6 +170,55 @@ def allowed_file(filename):
 		return False 
 
 
+def deciding_algo():
+
+	start_time = time.time()
+	print "Still in progress"
+	
+	
+	# get users face encoding
+	user_f_e = face_encode(filename)
+
+	# now read the database 
+	data = read_all_db()
+
+	# new list for storing the match names 
+	match_list = []
+
+	
+	# iterate through the databse
+	for i in range(len(data)):
+		# get the filenae as python variable
+		db_filename = data[i-1][1]
+		# get the face encoding as python variable
+		db_encoding = eval(str(json.loads(data[i-1][2])))	
+
+		# for each face encoding in the face_encoding array 
+		for single_encoding in db_encoding:
+			# check if there is a match 
+			match_user = face_recognition.compare_faces(user_f_e, single_encoding, tolerance)
+			
+			# THis is for error handling incase there was a problem running the compare_faces 
+			try:
+				# if there is a match 
+				if match_user[0]:
+				# 	Print out the name of the match 
+				#	print "Match Found: " + str(db_filename.encode('utf8'))
+				# Add the match to match_list 
+					match_list.append(db_filename)
+			# Exceptoion handling 
+			except Exception as e:
+				print "Error While running compare_faces, " + str(e)
+				return "Error: " + str(e) + " Please try another image"
+
+# Print out all the matches 
+	print "All Matches: " + str(match_list)
+# Return the match list 
+	return match_list
+
+
+
+
 # This is for the Restful, Post request inorder to register a face to the database
 @app.route('/register_face/<filename>', methods=['POST'])
 def register_command(filename):
@@ -225,10 +274,7 @@ def scan_matches(filename, tolerance):
 		return jsonify({"Error": "Please enter a valid file type" })
 
 
-def deciding_algo():
-	# try initially with 0.5 
-	print "Still in progress"
-	
+
 	
 
 
