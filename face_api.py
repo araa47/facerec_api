@@ -227,7 +227,7 @@ def scan_matches(filename, tolerance):
 
 def deciding_algo():
 	# try initially with 0.5 
-	
+	print "Still in progress"
 	
 	
 
