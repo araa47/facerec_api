@@ -93,13 +93,10 @@ def register_to_db(filename):
 
 
 
-def scan_for_match(filename, tolerance):
+def scan_for_match(data, filename, tolerance):
 
 	# get users face encoding
 	user_f_e = face_encode(filename)
-
-	# now read the database 
-	data = read_all_db()
 
 	# new list for storing the match names 
 	match_list = []
@@ -170,54 +167,73 @@ def allowed_file(filename):
 		return False 
 
 
-def deciding_algo():
+def deciding_algo(data, filename):
 
 	start_time = time.time()
-	print "Still in progress"
+
+
+
+	# Final Match List
+
+	final_match = []
+
+	# Start with 0.5 tolerance
+
+	first_match_list = scan_for_match(data, filename, 0.50)
 	
-	
-	# get users face encoding
-	user_f_e = face_encode(filename)
-
-	# now read the database 
-	data = read_all_db()
-
-	# new list for storing the match names 
-	match_list = []
-
-	
-	# iterate through the databse
-	for i in range(len(data)):
-		# get the filenae as python variable
-		db_filename = data[i-1][1]
-		# get the face encoding as python variable
-		db_encoding = eval(str(json.loads(data[i-1][2])))	
-
-		# for each face encoding in the face_encoding array 
-		for single_encoding in db_encoding:
-			# check if there is a match 
-			match_user = face_recognition.compare_faces(user_f_e, single_encoding, tolerance)
-			
-			# THis is for error handling incase there was a problem running the compare_faces 
-			try:
-				# if there is a match 
-				if match_user[0]:
-				# 	Print out the name of the match 
-				#	print "Match Found: " + str(db_filename.encode('utf8'))
-				# Add the match to match_list 
-					match_list.append(db_filename)
-			# Exceptoion handling 
-			except Exception as e:
-				print "Error While running compare_faces, " + str(e)
-				return "Error: " + str(e) + " Please try another image"
-
-# Print out all the matches 
-	print "All Matches: " + str(match_list)
-# Return the match list 
-	return match_list
+	if len(first_match_list) >= 5: 
+		# Do the test again 
+		second_match_list = scan_for_match(data, filename, 0.40)
+		# clear duplicates
+		if len(first_match_list) > 0 and len(second_match_list) >0: 
+			for item in second_match_list:
+				if item in first_match_list:
+					first_match_list.remove(item)
 
 
 
+
+	else:
+		# do the test again with  
+		second_match_list = scan_for_match(data, filename, 0.60)	
+		# this if is to avoid element is non iterable error
+		if len(first_match_list) > 0 and len(second_match_list) >0: 
+			for item in first_match_list:
+				if item in second_match_list:
+					second_match_list.remove(item)
+
+
+	if len(second_match_list) >= 5: 
+		third_match_list = scan_for_match(data, filename, 0.35)
+
+		if len(third_match_list) > 0 and len(second_match_list) > 0:
+			for item in third_match_list:
+				if item in second_match_list:
+					second_match_list.remove(item)
+				if item in first_match_list:
+					first_match_list.remove(item)
+		
+				# here list 3 is 100%, list 2 is 80%, and list 1 is 60% match 
+
+				return third_match_list, second_match_list, first_match_list
+	else:
+		third_match_list = scan_for_match(data, filename, 0.65)
+
+
+
+		if len(third_match_list) > 0 and len(second_match_list) > 0:
+			for item in second_match_list:
+				if item in third_match_list:
+					third_match_list.remove(item)
+		if len(first_match_list) > 0  and len(third_match_list) > 0: 
+			for item in first_match_list:
+				if item in third_match_list:
+					third_match_list.remove(item)
+					# here it is 1 = 100% , 2 = 80%, 3 = 70 % 
+		
+					return first_match_list, second_match_list, third_match_list
+
+		return first_match_list, second_match_list, third_match_list
 
 # This is for the Restful, Post request inorder to register a face to the database
 @app.route('/register_face/<filename>', methods=['POST'])
@@ -260,11 +276,15 @@ def scan_matches(filename, tolerance):
 		print "Pass"
 		filename = "Temp/" + filename
 		write_file(image, filename)
-		match_list = scan_for_match(filename, tolerance)
-		if len(match_list) > 0:
+		# now read the database 
+		data = read_all_db()
+		list_1, list_2, list_3 = deciding_algo(data, filename)
+		if len(list_3) > 0:
 			print "Elapsed: " + str(time.time() - start_time)
 			return jsonify({"Operation Sucess" : True, 
-							"Match Results" : match_list})
+							"100-80 % " : list_1,
+							"80-50 % " : list_2, 
+							"50-0 % " : list_3})
 
 		else:
 			return 	jsonify({"Operation Sucess" : True,
@@ -280,6 +300,8 @@ def scan_matches(filename, tolerance):
 
 if __name__ == '__main__':
 	app.run(debug=True)
+
+
 
 
 
