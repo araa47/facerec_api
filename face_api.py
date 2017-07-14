@@ -6,7 +6,7 @@ from numpy import array
 import os 
 import pickle 
 import time
-
+import six
 
 from flask import Flask, jsonify
 from flask import abort
@@ -167,6 +167,70 @@ def allowed_file(filename):
 		return False 
 
 
+
+
+def recursive_algo(data, filename, tolerance):
+	
+	first_match_list = scan_for_match(data, filename, tolerance)
+
+	path = []
+# Check which way to go 
+	if len(first_match_list) < 5: 
+		# this means too little matches so increment tolerance
+		path.append("+")
+		tolerance +=0.1
+		second_match_list = scan_for_match(data, filename, tolerance)
+	else:
+		# this means too many matches so decrement tolerance
+		path.append("-")
+		tolerance -= 0.1 
+		second_match_list = scan_for_match(data, filename, tolerance)
+
+
+	if len(second_match_list) < 5:
+		# too lil so increment again 
+		path.append("+")
+		tolerance +=0.05 
+		third_match_list = scan_for_match(data, filename, tolerance)
+	else:
+		path.append("-")
+		tolerance -= 0.05
+		third_match_list = scan_for_match(data, filename, tolerance)
+
+# Now we gotta arrange the lists based on the tolerance values we used and clear any duplicates 
+	if isinstance(first_match_list, six.string_types) and isinstance(second_match_list, six.string_types) and isinstance(third_match_list, six.string_types):
+		return "Error", "Error", "Error"
+
+
+	print path 
+	if path == ['+', '+']:
+		# clear 2nd and 3rd list duplicates
+		first_match_list, second_match_list, third_match_list = duplicate_cleaner(first_match_list, second_match_list, third_match_list)
+		return first_match_list, second_match_list, third_match_list
+	elif path == ['-', '-']:
+		third_match_list, second_match_list, first_match_list = duplicate_cleaner(third_match_list, second_match_list, first_match_list)
+		return third_match_list, second_match_list, first_match_list 
+	elif path == ['+' , '-']:
+		first_match_list, third_match_list, second_match_list = duplicate_cleaner( first_match_list, third_match_list, second_match_list)
+		return first_match_list, third_match_list, second_match_list
+	else:
+		second_match_list, third_match_list, first_match_list = duplicate_cleaner(second_match_list, third_match_list, first_match_list)
+		return second_match_list, third_match_list, first_match_list
+
+
+def duplicate_cleaner(first, second, third):
+	for item in first:
+		if item in second:
+			second.remove(item)
+		if item in third:
+			third.remove(item)
+
+	for item in second:
+		if item in third:
+			third.remove(item)
+
+	return first, second, third
+
 def deciding_algo(data, filename):
 
 	start_time = time.time()
@@ -212,7 +276,7 @@ def deciding_algo(data, filename):
 					second_match_list.remove(item)
 				if item in first_match_list:
 					first_match_list.remove(item)
-		
+
 				# here list 3 is 100%, list 2 is 80%, and list 1 is 60% match 
 
 				return third_match_list, second_match_list, first_match_list
@@ -278,7 +342,16 @@ def scan_matches(filename, tolerance):
 		write_file(image, filename)
 		# now read the database 
 		data = read_all_db()
-		list_1, list_2, list_3 = deciding_algo(data, filename)
+		#recursive_algo(data, filename, 0.5)
+		#return jsonify({"Operation Sucess" : True,
+		#					"Match Results": None})
+
+
+		list_1, list_2, list_3 = recursive_algo(data, filename, 0.5)
+
+		if list_1 == "Error" and list_2 == "Error" and list_3 == "Error":
+			return jsonify({"Error": "The photo isnt clear or containts multiple faces" })
+
 		if len(list_3) > 0:
 			print "Elapsed: " + str(time.time() - start_time)
 			return jsonify({"Operation Sucess" : True, 
@@ -287,9 +360,8 @@ def scan_matches(filename, tolerance):
 							"50-0 % " : list_3})
 
 		else:
-			return 	jsonify({"Operation Sucess" : True,
+			return jsonify({"Operation Sucess" : True,
 							"Match Results": None})
-
 	else:
 		return jsonify({"Error": "Please enter a valid file type" })
 
