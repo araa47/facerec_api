@@ -53,17 +53,23 @@ def initialize():
 
 # Function to get a face encoding array from an image: inpupt: filename, output: face_encoding array
 def face_encode(filename):
+	start_time = time.time()
 	# read the image
 	image = cv2.imread(filename)	
 	# scan the image for faces
 	face_locations = face_recognition.face_locations(image)
 	# get face encoding from the face locations 
 	face_encodings = face_recognition.face_encodings(image, face_locations, num_jitters=1)
+
+	duration = time.time() - start_time
+
+	print "Time taken to Encode: " + str(duration)
 	# return the face encoding 
 	return face_encodings
 
 # Reads the db and returns the face table name and corresponding face array 
 def read_all_db():
+	start_time = time.time()
 	## Reference name of sqlite3 database 
 	connection = sqlite3.connect("tide_av_faces.db")
 	# Create a cursor object 
@@ -71,6 +77,11 @@ def read_all_db():
 	sql_command = """ SELECT * FROM faces """
 	cursor.execute(sql_command)
 	result = cursor.fetchall()
+
+	duration = time.time() - start_time
+
+	print "Time taken to ReadDB: " + str(duration)
+
 	return result
 
 
@@ -93,10 +104,11 @@ def register_to_db(filename):
 
 
 
-def scan_for_match(data, filename, tolerance):
+def scan_for_match(data, user_f_e, tolerance):
 
-	# get users face encoding
-	user_f_e = face_encode(filename)
+	start_time = time.time()
+	# get users face encoding done before to speed up 
+	#user_f_e = face_encode(filename)
 
 	# new list for storing the match names 
 	match_list = []
@@ -127,7 +139,11 @@ def scan_for_match(data, filename, tolerance):
 				return "Error: " + str(e) + " Please try another image"
 
 # Print out all the matches 
-	print "All Matches: " + str(match_list)
+	#print "All Matches: " + str(match_list)
+	duration = time.time() - start_time
+
+	print "Time to Find Match: " + str(duration)
+
 # Return the match list 
 	return match_list
 
@@ -170,8 +186,10 @@ def allowed_file(filename):
 
 
 def recursive_algo(data, filename, tolerance):
-	
-	first_match_list = scan_for_match(data, filename, tolerance)
+	user_f_e = face_encode(filename)
+
+
+	first_match_list = scan_for_match(data, user_f_e, tolerance)
 
 	path = []
 # Check which way to go 
@@ -179,23 +197,23 @@ def recursive_algo(data, filename, tolerance):
 		# this means too little matches so increment tolerance
 		path.append("+")
 		tolerance +=0.1
-		second_match_list = scan_for_match(data, filename, tolerance)
+		second_match_list = scan_for_match(data, user_f_e, tolerance)
 	else:
 		# this means too many matches so decrement tolerance
 		path.append("-")
 		tolerance -= 0.1 
-		second_match_list = scan_for_match(data, filename, tolerance)
+		second_match_list = scan_for_match(data, user_f_e, tolerance)
 
 
 	if len(second_match_list) < 5:
 		# too lil so increment again 
 		path.append("+")
 		tolerance +=0.05 
-		third_match_list = scan_for_match(data, filename, tolerance)
+		third_match_list = scan_for_match(data, user_f_e, tolerance)
 	else:
 		path.append("-")
 		tolerance -= 0.05
-		third_match_list = scan_for_match(data, filename, tolerance)
+		third_match_list = scan_for_match(data, user_f_e, tolerance)
 
 # Now we gotta arrange the lists based on the tolerance values we used and clear any duplicates 
 	if isinstance(first_match_list, six.string_types) and isinstance(second_match_list, six.string_types) and isinstance(third_match_list, six.string_types):
