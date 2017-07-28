@@ -34,7 +34,7 @@ def initialize():
 
 	except Exception as e:
 		# This just handles the table not existing 
-		print "Exception Occured: " + e + " <You can mostly ignore this exception> " 
+		print "Exception Occured: " + str(e) + " <You can mostly ignore this exception> " 
 
 
 	# Create a table sql comand string 
@@ -45,7 +45,7 @@ def initialize():
 		cursor.execute(sql_command)
 	except Exception as e:
 		# This handles the table already existing 
-		print  "Exception Occured: " + e + " <You can mostly ignore this exception> " 
+		print  "Exception Occured: " + str(e) + " <You can mostly ignore this exception> " 
 	
 	# close the connection 
 	connection.close()
@@ -101,6 +101,9 @@ def register_to_db(filename):
 	connection.commit()
 	connection.close()
 	return True
+
+
+
 
 
 
@@ -317,6 +320,57 @@ def deciding_algo(data, filename):
 
 		return first_match_list, second_match_list, third_match_list
 
+
+
+
+
+
+
+
+def get_all(data, filename):
+	start_time = time.time()
+
+	user_f_e = face_encode(filename)
+
+
+	distance_array = []
+	name_array = []
+	for i in range(len(data)):
+		# get the filenae as python variable
+		db_filename = data[i-1][1]
+		# get the face encoding as python variable
+		db_encoding = eval(str(json.loads(data[i-1][2])))	
+
+		for single_encoding in db_encoding:
+			# check if there is a match 
+			face_distance = face_recognition.face_distance(user_f_e, single_encoding)
+	#		print face_distance
+			face_distance = float(face_distance)
+			distance_array.append(face_distance)
+			name_array.append(db_filename)
+
+	value_dict = dict(zip(name_array, distance_array))
+	#print value_dict
+	sorted_dict = sorted(value_dict.items(), key=lambda x: x[1])	
+	
+
+
+
+
+	duration = time.time() - start_time
+
+	print "Time to Find Match: " + str(duration)
+	
+	organized_names = []
+
+	for item in sorted_dict:
+		print item[0]
+		organized_names.append(item[0])
+	
+	return organized_names 
+	
+
+
 # This is for the Restful, Post request inorder to register a face to the database
 @app.route('/register_face/<filename>', methods=['POST'])
 def register_command(filename):
@@ -345,12 +399,13 @@ def register_command(filename):
 		return jsonify({"Error": "Please enter a valid file type" })
 
 
-@app.route('/scan_for_match/<filename>/<float:tolerance>', methods=['POST'])
-def scan_matches(filename, tolerance):
+@app.route('/scan_for_match/<filename>/<int:page>', methods=['POST'])
+def scan_matches(filename, page):
 	start_time = time.time()
 	# get the imagefile
 	image = request.files['image']
-	tolerance = float(tolerance)
+	page = int(page)
+	page = page - 1
 	# check if its correct format
 	check = allowed_file(filename)
 
@@ -364,6 +419,23 @@ def scan_matches(filename, tolerance):
 		#return jsonify({"Operation Sucess" : True,
 		#					"Match Results": None})
 
+
+		answer = get_all(data, filename)
+		
+		start_page = page*100
+
+		end_page = start_page + 100 
+		print "Page Start: " + str(start_page) + " Page_End: " + str(end_page)
+		answer = answer[start_page: end_page]
+
+		return jsonify(answer)
+
+
+	else:
+		return jsonify({"Error": "Please enter a valid file type" })
+
+
+'''
 
 		list_1, list_2, list_3 = recursive_algo(data, filename, 0.5)
 
@@ -386,12 +458,10 @@ def scan_matches(filename, tolerance):
 
 
 	
-
+'''
 
 if __name__ == '__main__':
 	app.run(debug=True, host='0.0.0.0')
-
-
 
 
 

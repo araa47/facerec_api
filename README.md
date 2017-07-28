@@ -30,14 +30,14 @@ The post request also needs to contain the image itself. This can be done using 
 
 This is the post request to be used in order to find matches. You will need to use the following url:
 ```
-http://127.0.0.1:5000/scan_for_match/<filename>/<tolerance>
+http://127.0.0.1:5000/scan_for_match/<filename>/<page>
 
 ```
-filename should be replaced with the name of the file you want to find matches from. Tolerance should be a value between 0-1. 0.6 seems to give the most accurate results for matches. Incase you do not see any matches while using 0.6 you can increment the tolerance by 0.01 till you have enough match results.
+filename should be replaced with the name of the file you want to find matches from. Page should be replaced by an integer value. 1 is for page 1 results. 2 is for page 2 results and so on. 
 
 
 ```
-http://127.0.0.1:5000/scan_for_match/obama.png/0.60
+http://127.0.0.1:5000/scan_for_match/obama.png/1
 ```
 
 The post request also needs to contain the image itself. This can be done using the form-data format where the key is the following string "image", and the Value is the image file itself.
