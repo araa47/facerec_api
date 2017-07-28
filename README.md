@@ -42,7 +42,7 @@ http://127.0.0.1:5000/scan_for_match/obama.png/1
 
 The post request also needs to contain the image itself. This can be done using the form-data format where the key is the following string "image", and the Value is the image file itself.
 
-#### Example Postman Request and Response
+#### Example Postman Request and Response (OUTDATED , (tolerance has been changed to page number), will be updated soon)
 ![Alt text](Facerec_match.png?raw=true "Example Postman Request and Response:")
 
 
