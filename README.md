@@ -1,8 +1,8 @@
 ### Updates have been made and the API is currently not compatible with the previous specs, please read throught this readme again to use the latest version of the API
 
-# Face Recognition API BETA
+# Face Similiraty Engine (REST API)
 
-##### This project is a simple face recognition api coded in python. The project uses an sqlite3 database to store the images. 
+##### This project is a simple face similarity api coded in python. The project uses an sqlite3 database to store the images. 
 
 
 ## Instructions to Use the API 
