@@ -34,7 +34,7 @@ def initialize():
 
 	except Exception as e:
 		# This just handles the table not existing 
-		print "Exception Occured: " + str(e) + " <You can mostly ignore this exception> " 
+		print("Exception Occured: " + str(e) + " <You can mostly ignore this exception> ")
 
 
 	# Create a table sql comand string 
@@ -45,7 +45,7 @@ def initialize():
 		cursor.execute(sql_command)
 	except Exception as e:
 		# This handles the table already existing 
-		print  "Exception Occured: " + str(e) + " <You can mostly ignore this exception> " 
+		print("Exception Occured: " + str(e) + " <You can mostly ignore this exception> ")
 	
 	# close the connection 
 	connection.close()
@@ -63,7 +63,7 @@ def face_encode(filename):
 
 	duration = time.time() - start_time
 
-	print "Time taken to Encode: " + str(duration)
+	print("Time taken to Encode: " + str(duration))
 	# return the face encoding 
 	return face_encodings
 
@@ -80,7 +80,7 @@ def read_all_db():
 
 	duration = time.time() - start_time
 
-	print "Time taken to ReadDB: " + str(duration)
+	print("Time taken to ReadDB: " + str(duration))
 
 	return result
 
@@ -138,14 +138,14 @@ def scan_for_match(data, user_f_e, tolerance):
 					match_list.append(db_filename)
 			# Exceptoion handling 
 			except Exception as e:
-				print "Error While running compare_faces, " + str(e)
+				print("Error While running compare_faces, " + str(e))
 				return "Error: " + str(e) + " Please try another image"
 
 # Print out all the matches 
 	#print "All Matches: " + str(match_list)
 	duration = time.time() - start_time
 
-	print "Time to Find Match: " + str(duration)
+	print("Time to Find Match: " + str(duration))
 
 # Return the match list 
 	return match_list
@@ -159,7 +159,7 @@ def main_register():
 	# iterate through the files
 	for files in scrapename:
 		# print out the filename
-		print files 
+		print(files)
 		# register the file to database 
 		register_to_db(files)
 
@@ -168,7 +168,7 @@ def main_register():
 # image here is a special type that is part of a post request (Used when recieving requests to locally store the iamge for processing)
 # __TODO__ : Need to add a delete file part where the images are deleted after they are registered or used
 def write_file(image, filename):
-	with open(filename, 'w') as fp:
+	with open(filename, 'wb') as fp:
 			for item in image:
 				fp.write(item)
 
@@ -223,7 +223,7 @@ def recursive_algo(data, filename, tolerance):
 		return "Error", "Error", "Error"
 
 
-	print path 
+	print(path)
 	if path == ['+', '+']:
 		# clear 2nd and 3rd list duplicates
 		first_match_list, second_match_list, third_match_list = duplicate_cleaner(first_match_list, second_match_list, third_match_list)
@@ -359,12 +359,12 @@ def get_all(data, filename):
 
 	duration = time.time() - start_time
 
-	print "Time to Find Match: " + str(duration)
+	print("Time to Find Match: " + str(duration))
 	
 	organized_names = []
 
 	for item in sorted_dict:
-		print item[0]
+		print(item[0])
 		organized_names.append(item[0])
 	
 	return organized_names 
@@ -383,13 +383,13 @@ def register_command(filename):
 	check = allowed_file(filename)
 
 	if check == True:
-		print "Pass"
+		print("Pass")
 		filename = "Temp/" + filename
 		write_file(image, filename)
 		register_sucess = register_to_db(filename)
 		if register_sucess == True:
 			os.remove(filename)
-			print "Elapsed: " + str(time.time() - start_time)
+			print("Elapsed: " + str(time.time() - start_time))
 			return jsonify({"Operation Sucess" : True})
 
 		else:
@@ -410,7 +410,7 @@ def scan_matches(filename, page):
 	check = allowed_file(filename)
 
 	if check == True:
-		print "Pass"
+		print("Pass")
 		filename = "Temp/" + filename
 		write_file(image, filename)
 		# now read the database 
@@ -425,7 +425,7 @@ def scan_matches(filename, page):
 		start_page = page*100
 
 		end_page = start_page + 100 
-		print "Page Start: " + str(start_page) + " Page_End: " + str(end_page)
+		print("Page Start: " + str(start_page) + " Page_End: " + str(end_page))
 		answer = answer[start_page: end_page]
 
 		return jsonify(answer)
